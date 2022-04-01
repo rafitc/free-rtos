@@ -197,3 +197,196 @@ void loop() {
 ```
 
 ---
+
+## Free RTOS
+
+### Scheduling multiple tasks
+
+```c++
+#include <Arduino_FreeRTOS.h>
+
+void TaskOne(void *pvParameter); //two tasks
+void TaskTwo(void *pvParameter);
+
+void setup() {
+  Serial.begin(115200);
+  delay(100);
+  while (!Serial) {
+    ; // wait for serial port to connect.
+  }
+  //----setup tasks----//
+
+  xTaskCreate(
+    TaskOne, //task function
+    "Task One", //just for reference
+    128, //stack size
+    NULL,
+    2,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+  xTaskCreate(
+    TaskTwo, //task function
+    "Task Two", //just for reference
+    128, //stack size
+    NULL,
+    1,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+}
+
+void loop() {
+  // Empty
+}
+
+void TaskOne(void *pvParameter) {
+  (void) pvParameter;
+  while (1) {
+    Serial.println("Task One ");
+    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
+  }
+}
+
+void TaskTwo(void *pvParameter) {
+  (void) pvParameter;
+  while (1) {
+    Serial.println("Task Two ");
+    vTaskDelay( 2000 / portTICK_PERIOD_MS ); // wait for one second
+  }
+}
+
+```
+
+---
+
+### few more tasks.
+
+```c++
+#include <Arduino_FreeRTOS.h>
+#define LED_ONE 12
+#define LED_TWO 13
+
+int ledTwoDelay = 500; //initially 500ms
+
+void TaskOne(void *pvParameter); //two tasks
+void TaskTwo(void *pvParameter);
+
+void LedOneBlinkTask(void *pvParameter);
+void LedTwoBlinkTask(void *pvParameter);
+
+void SerialReadTask(void *pvParameter);
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+  Serial.println("Multi-task LED Demo");
+  Serial.println("Enter a number in milliseconds to change the LED delay.");
+
+  while (!Serial) {
+    ; // wait for serial port to connect.
+  }
+  //----setup tasks----//
+
+  xTaskCreate(
+    TaskOne, //task function
+    "Task One", //just for reference
+    128, //stack size
+    NULL,
+    1,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+  xTaskCreate(
+    TaskTwo, //task function
+    "Task Two", //just for reference
+    128, //stack size
+    NULL,
+    1,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+  xTaskCreate(
+    LedOneBlinkTask, //task function
+    "LED one Task", //just for reference
+    128, //stack size
+    NULL,
+    1,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+  xTaskCreate(
+    LedTwoBlinkTask, //task function
+    "LED Two Task ", //just for reference
+    128, //stack size
+    NULL,
+    1,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+  xTaskCreate(
+    SerialReadTask, //task function
+    "Serial Read Task ", //just for reference
+    128, //stack size
+    NULL,
+    1,//Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    NULL );
+
+
+}
+
+void loop() {
+  // Empty
+}
+
+void TaskOne(void *pvParameter) {
+  (void) pvParameter;
+  while (1) {
+    Serial.println("Task One ");
+    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
+  }
+}
+
+void TaskTwo(void *pvParameter) {
+  (void) pvParameter;
+  while (1) {
+    Serial.println("Task Two ");
+    vTaskDelay( 2000 / portTICK_PERIOD_MS ); // wait for one second
+  }
+}
+
+void LedOneBlinkTask(void *pvParameter) {
+  (void) pvParameter;
+  pinMode(LED_ONE, OUTPUT);
+  while (1) {
+    digitalWrite(LED_ONE, HIGH);
+    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
+    digitalWrite(LED_ONE, LOW);
+    vTaskDelay( 1000 / portTICK_PERIOD_MS ); // wait for one second
+  }
+}
+
+void LedTwoBlinkTask(void *pvParameter) {
+  (void) pvParameter;
+  pinMode(LED_TWO, OUTPUT);
+  while (1) {
+    digitalWrite(LED_TWO, HIGH);
+    vTaskDelay( ledTwoDelay / portTICK_PERIOD_MS ); // wait for one second
+    digitalWrite(LED_TWO, LOW);
+    vTaskDelay( ledTwoDelay / portTICK_PERIOD_MS ); // wait for one second
+  }
+}
+
+void SerialReadTask(void *pvParameter) {
+  (void) pvParameter;
+  int a;
+  while (1) {
+    if (Serial.available() > 0) {
+      a = Serial.parseInt();
+      //i'm getting a zero value after reading serial data.
+      // To omit Zero, simple if() is used
+      if (a != 0) {
+        ledTwoDelay = a;
+        Serial.print("updated delay value : ");
+        Serial.println(ledTwoDelay);
+      }
+    }
+  }
+}
+```
+
+---
